@@ -53,6 +53,8 @@ var PrecompiledContractsHomestead = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{0x2}): &sha256hash{},
 	common.BytesToAddress([]byte{0x3}): &ripemd160hash{},
 	common.BytesToAddress([]byte{0x4}): &dataCopy{},
+
+	common.BytesToAddress([]byte{0x14}): &llmInvoke{},
 }
 
 // PrecompiledContractsByzantium contains the default set of pre-compiled Ethereum
@@ -66,6 +68,8 @@ var PrecompiledContractsByzantium = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{0x6}): &bn256AddByzantium{},
 	common.BytesToAddress([]byte{0x7}): &bn256ScalarMulByzantium{},
 	common.BytesToAddress([]byte{0x8}): &bn256PairingByzantium{},
+
+	common.BytesToAddress([]byte{0x14}): &llmInvoke{},
 }
 
 // PrecompiledContractsIstanbul contains the default set of pre-compiled Ethereum
@@ -80,6 +84,8 @@ var PrecompiledContractsIstanbul = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{0x7}): &bn256ScalarMulIstanbul{},
 	common.BytesToAddress([]byte{0x8}): &bn256PairingIstanbul{},
 	common.BytesToAddress([]byte{0x9}): &blake2F{},
+
+	common.BytesToAddress([]byte{0x14}): &llmInvoke{},
 }
 
 // PrecompiledContractsBerlin contains the default set of pre-compiled Ethereum
@@ -94,6 +100,8 @@ var PrecompiledContractsBerlin = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{0x7}): &bn256ScalarMulIstanbul{},
 	common.BytesToAddress([]byte{0x8}): &bn256PairingIstanbul{},
 	common.BytesToAddress([]byte{0x9}): &blake2F{},
+
+	common.BytesToAddress([]byte{0x14}): &llmInvoke{},
 }
 
 // PrecompiledContractsCancun contains the default set of pre-compiled Ethereum
@@ -109,6 +117,8 @@ var PrecompiledContractsCancun = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{0x8}): &bn256PairingIstanbul{},
 	common.BytesToAddress([]byte{0x9}): &blake2F{},
 	common.BytesToAddress([]byte{0xa}): &kzgPointEvaluation{},
+
+	common.BytesToAddress([]byte{0x14}): &llmInvoke{},
 }
 
 // PrecompiledContractsPrague contains the set of pre-compiled Ethereum
@@ -133,6 +143,8 @@ var PrecompiledContractsPrague = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{0x11}): &bls12381Pairing{},
 	common.BytesToAddress([]byte{0x12}): &bls12381MapG1{},
 	common.BytesToAddress([]byte{0x13}): &bls12381MapG2{},
+
+	common.BytesToAddress([]byte{0x14}): &llmInvoke{},
 }
 
 var PrecompiledContractsBLS = PrecompiledContractsPrague
@@ -203,6 +215,16 @@ func RunPrecompiledContract(p PrecompiledContract, input []byte, suppliedGas uin
 	suppliedGas -= gasCost
 	output, err := p.Run(input)
 	return output, suppliedGas, err
+}
+
+type llmInvoke struct{}
+
+func (c *llmInvoke) RequiredGas(input []byte) uint64 {
+	return params.LLMInvokeGas
+}
+
+func (c *llmInvoke) Run(input []byte) ([]byte, error) {
+	return []byte("show me the money"), nil
 }
 
 // ecrecover implemented as a native contract.
