@@ -224,7 +224,8 @@ func (c *llmInvoke) RequiredGas(input []byte) uint64 {
 }
 
 func (c *llmInvoke) Run(input []byte) ([]byte, error) {
-	return []byte("show me the money"), nil
+	in := string(input)
+	return []byte("hello " + in), nil
 }
 
 // ecrecover implemented as a native contract.
