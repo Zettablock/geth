@@ -19,6 +19,7 @@ package vm
 import (
 	"crypto/sha256"
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
@@ -35,6 +36,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/bn256"
 	"github.com/ethereum/go-ethereum/crypto/kzg4844"
 	"github.com/ethereum/go-ethereum/params"
+	"github.com/go-resty/resty/v2"
 	"golang.org/x/crypto/ripemd160"
 )
 
@@ -217,6 +219,41 @@ func RunPrecompiledContract(p PrecompiledContract, input []byte, suppliedGas uin
 	return output, suppliedGas, err
 }
 
+func TalkToGpt(input string) (string, error) {
+	apiEndpoint := "https://api.openai.com/v1/chat/completions"
+	apiKey := ""
+
+	client := resty.New()
+
+	response, err := client.R().
+		SetAuthToken(apiKey).
+		SetHeader("Content-Type", "application/json").
+		SetBody(map[string]interface{}{
+			"model":      "gpt-3.5-turbo",
+			"messages":   []interface{}{map[string]interface{}{"role": "system", "content": input}},
+			"max_tokens": 50,
+		}).
+		Post(apiEndpoint)
+
+	if err != nil {
+		fmt.Println("Error while sending send the request: %v", err)
+		return "", err
+	}
+
+	body := response.Body()
+
+	var data map[string]interface{}
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		fmt.Println("Error while decoding JSON response:", err)
+		return "", err
+	}
+
+	// Extract the content from the JSON response
+	content := data["choices"].([]interface{})[0].(map[string]interface{})["message"].(map[string]interface{})["content"].(string)
+	return content, nil
+}
+
 type llmInvoke struct{}
 
 func (c *llmInvoke) RequiredGas(input []byte) uint64 {
@@ -224,8 +261,16 @@ func (c *llmInvoke) RequiredGas(input []byte) uint64 {
 }
 
 func (c *llmInvoke) Run(input []byte) ([]byte, error) {
+	//fmt.Println(input)
 	in := string(input)
-	return []byte("hello " + in), nil
+	//fmt.Println(in)
+	r, err := TalkToGpt(in)
+	if err != nil {
+		return []byte(err.Error()), nil
+	}
+	//fmt.Println(r)
+	//fmt.Println([]byte(r))
+	return []byte(r), nil
 }
 
 // ecrecover implemented as a native contract.
